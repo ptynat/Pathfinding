@@ -5,7 +5,7 @@ const MAX = 1000000
 const direct = [(-1, 0), (1, 0), (0, 1), (0, -1)]
 
 function readmap(name::String)
-    lines = readlines(name)
+    lines = readlines("dat/" * name)
     h = parse(Int, split(lines[2])[2])
     w = parse(Int, split(lines[3])[2])
     map = Matrix{Int64}(undef, h, w)
@@ -17,12 +17,12 @@ function readmap(name::String)
     return (map, h, w)
 end
 
-function path_cost(map::Matrix{Int64}, path::Vector{Tuple{Int64, Int64}})
+function pathCost(map::Matrix{Int64}, path::Vector{Tuple{Int64, Int64}})
     length(path) <= 1 && return 0
     return sum(map[p[1], p[2]] for p in path[2:end])
 end
 
-function print_results(algo_name::String, path, cost, states)
+function printResults(algo_name::String, path, cost, states)
     println("Algorithm: $algo_name ")
     if path === nothing
         println("pas de chemin trouvé")
@@ -49,7 +49,7 @@ function algoBFS(fname, vD, vA)
         
         if current == vA
             path = backtrack(vD, vA, parent)
-            return path, path_cost(map, path), states 
+            return path, pathCost(map, path), states 
         end
 
         for (hr, vr) in direct
@@ -93,7 +93,7 @@ function algoDijkstra(fname, vD, vA)
 
         if (curr1, curr2) == vA
             finalpath = backtrack(vD, vA, parent)
-            return finalpath,  path_cost(map, finalpath), states
+            return finalpath,  pathCost(map, finalpath), states
         end
 
         for (hr, vr) in direct
@@ -128,7 +128,7 @@ function algoGlouton(fname, vD, vA)
 
         if (cX, cY) == vA
             path = backtrack(vD, vA, parent)
-            return path, path_cost(map, path), states
+            return path, pathCost(map, path), states
         end
 
         for (hr, vr) in direct
@@ -164,7 +164,7 @@ function algoAstar(fname, vD, vA)
 
         if (cX, cY) == vA
             path = backtrack(vD, vA, parent)
-            return path, path_cost(map, path), states 
+            return path, pathCost(map, path), states 
         end
 
         for (hr, vr) in direct
@@ -204,43 +204,43 @@ println("algoAstar: ", median(t4.times), " ns")
 println("Instance 1, Berlin")
 
 path, cost, states = algoBFS("Berlin_0_256.map", (151, 2), (1, 2))
-print_results("BFS", path, cost, states)
+printResults("BFS", path, cost, states)
 
 path, cost, states = algoDijkstra("Berlin_0_256.map", (151, 2), (1, 2))
-print_results("Dijkstra", path, cost, states)
+printResults("Dijkstra", path, cost, states)
 
 path, cost, states = algoGlouton("Berlin_0_256.map", (151, 2), (1, 2))
-print_results("Gouton", path, cost, states)
+printResults("Gouton", path, cost, states)
 
 path, cost, states = algoAstar("Berlin_0_256.map", (151, 2), (1, 2))
-print_results("Astar", path, cost, states)
+printResults("Astar", path, cost, states)
 
 #-------------------------Map 2----------------------------------------
 println("Instance 2, AcrosstheCape")
 
 path, cost, states = algoBFS("AcrosstheCape.map", (151, 2), (1, 2))
-print_results("BFS", path, cost, states)
+printResults("BFS", path, cost, states)
 
 path, cost, states = algoDijkstra("AcrosstheCape.map", (151, 2), (1, 2))
-print_results("Dijkstra", path, cost, states)
+printResults("Dijkstra", path, cost, states)
 
 path, cost, states = algoGlouton("AcrosstheCape.map", (151, 2), (1, 2))
-print_results("Gouton", path, cost, states)
+printResults("Gouton", path, cost, states)
 
 path, cost, states = algoAstar("AcrosstheCape.map", (151, 2), (1, 2))
-print_results("Astar", path, cost, states)
+printResults("Astar", path, cost, states)
 
 #-------------------------Map 3---------------------------------------
 println("Instance 3, swampofsorrows")
 
 path, cost, states = algoBFS("swampofsorrows.map", (426, 45), (484, 419))
-print_results("BFS", path, cost, states)
+printResults("BFS", path, cost, states)
 
 path, cost, states = algoDijkstra("swampofsorrows.map", (426, 45), (484, 419))
-print_results("Dijkstra", path, cost, states)
+printResults("Dijkstra", path, cost, states)
 
 path, cost, states = algoGlouton("swampofsorrows.map", (426, 45), (484, 419))
-print_results("Gouton", path, cost, states)
+printResults("Gouton", path, cost, states)
 
 path, cost, states = algoAstar("swampofsorrows.map", (426, 45), (484, 419))
-print_results("Astar", path, cost, states)
+printResults("Astar", path, cost, states)
