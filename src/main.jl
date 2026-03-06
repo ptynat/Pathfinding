@@ -189,17 +189,17 @@ function algoAstar(fname, vD, vA)
     return nothing, MAX, states
 end
 
-#=
-t1 = @benchmark algoBFS("Berlin_0_256.map", (151, 2), (1, 2))
-t2 = @benchmark algoDijkstra("Berlin_0_256.map", (151, 2), (1, 2))
-t3 = @benchmark algoGlouton("Berlin_0_256.map", (151, 2), (1, 2))
-t4 = @benchmark algoAstar("Berlin_0_256.map", (151, 2), (1, 2))
+
+t1 = @benchmark algoBFS("theglaive.map", (189, 193), (226, 437))
+t2 = @benchmark algoDijkstra("theglaive.map", (189, 193), (226, 437))
+t3 = @benchmark algoGlouton("theglaive.map", (189, 193), (226, 437))
+t4 = @benchmark algoAstar("theglaive.map", (189, 193), (226, 437))
 
 println("algoBFS: ", median(t1.times), " ns")
 println("algoDijkstra: ", median(t2.times), " ns")
 println("algoGlouton: ", median(t3.times), " ns")
 println("algoAstar: ", median(t4.times), " ns")
-=#
+
 
 println("Instance 1, Berlin")
 
@@ -231,16 +231,16 @@ path, cost, states = algoAstar("AcrosstheCape.map", (151, 2), (1, 2))
 printResults("Astar", path, cost, states)
 
 #-------------------------Map 3---------------------------------------
-println("Instance 3, swampofsorrows")
+println("Instance 3, theglaive")
 
-path, cost, states = algoBFS("swampofsorrows.map", (426, 45), (484, 419))
+@time path, cost, states = algoBFS("theglaive.map", (189, 193), (226, 437))
 printResults("BFS", path, cost, states)
 
-path, cost, states = algoDijkstra("swampofsorrows.map", (426, 45), (484, 419))
+@time path, cost, states = algoDijkstra("theglaive.map", (189, 193), (226, 437))
 printResults("Dijkstra", path, cost, states)
 
-path, cost, states = algoGlouton("swampofsorrows.map", (426, 45), (484, 419))
+@time path, cost, states = algoGlouton("theglaive.map", (189, 193), (226, 437))
 printResults("Gouton", path, cost, states)
 
-path, cost, states = algoAstar("swampofsorrows.map", (426, 45), (484, 419))
+@time path, cost, states = algoAstar("theglaive.map", (189, 193), (226, 437))
 printResults("Astar", path, cost, states)
