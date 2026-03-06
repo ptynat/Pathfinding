@@ -1,10 +1,10 @@
 ## fonctions
 
-résultats | Berlin | theglaive | 
-algoBFS | 6.8907e6 ns | 5.14989e7 ns |
-algoDijkstra|8.9197e6 ns | 7.00048e7 ns |
-algoGlouton | 848050.0 ns | 4.4995e6 ns |
-algoAstar |2.6975e6 ns | 1.04811e7 ns |
+| résultats | Berlin | theglaive | 
+| algoBFS | 6.8907e6 ns | 5.14989e7 ns |
+| algoDijkstra|8.9197e6 ns | 7.00048e7 ns |
+| algoGlouton | 848050.0 ns | 4.4995e6 ns |
+| algoAstar |2.6975e6 ns | 1.04811e7 ns |
 
 ### BFS
 signature: algoBFS(fname, vD, vA)
