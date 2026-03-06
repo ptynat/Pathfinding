@@ -1,5 +1,18 @@
 ## fonctions
 
+résultats: sur Berlin:
+algoBFS: 6.8907e6 ns
+
+
+algoDijkstra: 8.9197e6 ns
+
+
+algoGlouton: 848050.0 ns
+
+
+algoAstar: 2.6975e6 ns
+
+
 ### BFS
 signature: algoBFS(fname, vD, vA)
 retour: path, path_cost(map, path), states

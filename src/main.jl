@@ -189,7 +189,7 @@ function algoAstar(fname, vD, vA)
     return nothing, MAX, states
 end
 
-#=
+
 t1 = @benchmark algoBFS("Berlin_0_256.map", (151, 2), (1, 2))
 t2 = @benchmark algoDijkstra("Berlin_0_256.map", (151, 2), (1, 2))
 t3 = @benchmark algoGlouton("Berlin_0_256.map", (151, 2), (1, 2))
@@ -199,7 +199,7 @@ println("algoBFS: ", median(t1.times), " ns")
 println("algoDijkstra: ", median(t2.times), " ns")
 println("algoGlouton: ", median(t3.times), " ns")
 println("algoAstar: ", median(t4.times), " ns")
-=#
+
 
 println("Instance 1, Berlin")
 

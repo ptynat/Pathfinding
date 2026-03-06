@@ -11,5 +11,5 @@ Structure:
 
 Il faut lancer depuis la racine du projet, dans le fichier main.jl il y a le test des 4 algorithmes
 avec un point sur 3 cartes différents, Celle de Berlin, une carte de starcraft et une de Dragon Age (I ou II). La Troisième instance n'a pas de chemin valide.
-
+Pour avoir l'affichage montré dans le pdf du projet, il faut utiliser printResults avec les résultats de l'Algo voulu
 
