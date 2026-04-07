@@ -7,6 +7,8 @@ Structure:
         - 3 instances de .map
     - src:
         - main.jl
+        - pathFinding.jl
+        - SIPP.jl
     - doc:
         - doc.md
 
