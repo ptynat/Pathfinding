@@ -1,0 +1,165 @@
+const FNAME = "version1.map"
+const MAP, MAP_H, MAP_W = readmap(FNAME)
+const M = fill(MAX, (MAP_H, MAP_W))
+
+#Structure for AMRs to keep track of their states: Where and Availability
+mutable struct AMRs
+    nb::Int64
+    position::Tuple{Int64, Int64}
+    time::Int64
+end
+
+function algoAstarMod(vD, vA, D, st)
+    map, h, w = MAP, MAP_H, MAP_W
+    L = PriorityQueue{Tuple{Int64, Int64}, Int64}()
+    cost = M
+    fill!(cost, MAX)
+    parent = Dict{Tuple{Int64, Int64}, Tuple{Int64, Int64}}()
+
+
+    L[vD] = 0
+    cost[vD[1], vD[2]] = 0
+    parent[vD] = (-1, -1)
+
+    while !(isempty(L))
+        cX, cY = dequeue!(L)
+
+        if (cX, cY) == vA
+            path = backtrack(vD, vA, parent)
+            return path, pathCost(map, path), D
+        end
+
+        for (hr, vr) in direct
+            newTile = ((cX + hr), (cY + vr))
+            inbound= ( 1<= newTile[1] <= h) && (1 <= newTile[2] <= w)
+            if inbound
+                tcost = map[newTile[1], newTile[2]] 
+                cost2 = cost[cX, cY] + tcost
+
+                #verifying all the timesteps 
+                noColision = true
+                for time in (st + cost2 - tcost):(st + cost2 - 1)
+                    if haskey(D, time) && newTile in D[time]
+                        noColision = false
+                        break
+                    end
+                end
+                
+                if noColision
+                    dist = abs(newTile[1] - vA[1]) + abs(newTile[2] - vA[2])
+                    priotot = dist + cost2
+
+                    if cost2 < (cost[newTile[1], newTile[2]])
+                        parent[newTile] = (cX, cY)
+                        cost[newTile[1], newTile[2]] = cost2
+                        L[newTile] = priotot
+                    end
+                end
+            end
+        end
+    end
+    return nothing, MAX, D
+end
+
+
+function planMission(amrs::Vector{AMRs}, vD::Tuple{Int64, Int64}, vA::Tuple{Int64, Int64}, timeLine::Dict, stime::Int64, output=True)
+    choice = nothing
+    cost = MAX
+    path = nothing
+    if output
+        println("Mission from  $vD  to $vA :")
+    end
+
+    for amr in amrs
+        #mission start is at least 
+        startT = max(amr.time, stime)
+
+        tPath, tCost, _ = algoAstarMod(amr.position, vD, timeLine, startT)
+        
+        if isnothing(tPath)
+            continue
+        end
+
+        endtime = startT + tCost
+        delPath, delCost, _ = algoAstarMod(vD, vA, timeLine, endtime)
+
+        if isnothing(delPath)
+            println("No valid path for delivery for mission for AMR: $(amr.nb)")
+            continue
+        end
+        totalCost = endtime + delCost
+
+        if totalCost < cost
+            choice = amr
+            path = vcat(tPath[1:end-1], delPath)
+            cost = totalCost
+            
+        end
+    end
+
+    println("-- Result: $(isnothing(choice) ? "No path" : "Sucsess AMR number: $(choice.nb)") --\n")
+    return choice, path, cost
+end
+
+#Adds all the occupied spaces over a mission in the timeline.
+function updateTimeline(map::Matrix, V::Vector{Tuple{Int64, Int64}}, D::Dict{Int64, Set{Tuple{Int64, Int64}}}, startingTime::Int64)
+    tm = startingTime
+    for place in V
+        cost = map[place[1], place[2]]
+        for occ in tm:(tm+cost-1)
+            if !(haskey(D, occ))
+                D[occ] = Set{Tuple{Int64, Int64}}()
+            end
+            
+            push!(D[occ], place)
+        end
+        tm += cost
+    end
+    return D
+end
+
+#---- Execution and example of use.
+
+missions = [
+    ((1, 4), (11, 9), 0),     
+    ((1, 14), (11, 2), 3),    
+    ((1, 4), (11, 4), 5),
+    ((1, 14), (11, 9), 7)
+]
+amrs = [
+    AMRs(1, (1, 4), 0),
+    AMRs(2, (1, 9), 0),
+    AMRs(3, (1, 14), 0),
+    AMRs(4, (1, 19), 0)
+]
+
+timeline = Dict{Int64, Set{Tuple{Int64, Int64}}}()
+missions_log = []
+
+amr = nothing
+bpath = nothing
+cost = 0
+
+# This serves as a test to run the missions
+function runMissions(missions, amrs, timeline)
+    #Going through the missions one after another, and adding path to the constraints
+    for (pickup, delivery, stime) in missions
+        amr, bpath, cost = planMission(amrs, pickup, delivery, timeline, stime, false)
+        
+
+        if !isnothing(amr)
+            startT = max(amr.time, stime)
+            delivery_time = cost
+            
+            push!(missions_log, (amr.nb, bpath, pickup, delivery))
+            amr.position = delivery
+            amr.time = delivery_time
+            updateTimeline(MAP, bpath, timeline, startT)  # ← Utilise startT!
+        end
+    end
+    return missions_log
+end
+
+missionsLog = runMissions(missions, amrs, timeline)
+# Visualization of the result saved to "test_missions.png"
+saveMissionsMap("version1.map", missions_log, "test_missions")

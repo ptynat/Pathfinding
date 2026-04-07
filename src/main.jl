@@ -1,5 +1,6 @@
 using DataStructures
 using BenchmarkTools
+using Images, Colors, FileIO
 
 const MAX = 1000000
 const direct = [(-1, 0), (1, 0), (0, 1), (0, -1)]
@@ -9,6 +10,7 @@ function readmap(name::String)
     h = parse(Int, split(lines[2])[2])
     w = parse(Int, split(lines[3])[2])
     map = Matrix{Int64}(undef, h, w)
+    #replacing the right cost on each tile.
     for (i, line) in enumerate(lines[5:end])
         for (j, char) in enumerate(line)
             map[i, j] = (char == '.' ? 1 : (char == 'S' ? 5 : (char == 'W' ? 8 : MAX)))
@@ -29,167 +31,105 @@ function printResults(algo_name::String, path, cost, states)
         println("evaluated: $states")
         return
     end 
-    println("  Distance D → A             : $cost")
+    println("  Distance D -> A             : $cost")
     println("  Number of states evaluated : $states")
-    path_str = join(["($(p[1]), $(p[2]))" for p in path], "->")
-    println("  Path D → A                 : $path_str")
+
+    println("  Path D -> A                 : $path")
 end
 
-function algoBFS(fname, vD, vA)
-    states = 0
-    map, h, w = readmap(fname)
-    queue = Queue{Tuple{Int64, Int64}}()
-    parent = Dict{Tuple{Int64, Int64}, Tuple{Int64, Int64}}()
-    enqueue!(queue, vD)
-    parent[vD] = (-1, -1)
-
-    while (isempty(queue) != true)
-        current = dequeue!(queue) # (x, y)
-        states += 1
-        
-        if current == vA
-            path = backtrack(vD, vA, parent)
-            return path, pathCost(map, path), states 
-        end
-
-        for (hr, vr) in direct
-            newTile = (current[1] + hr,current[2] +vr)
-            inbound = (newTile[1] in 1:h) && (newTile[2] in  1:w)
-            
-            if inbound && !haskey(parent, newTile) && (map[newTile[1], newTile[2]] != MAX)
-                enqueue!(queue, newTile) 
-                parent[newTile] = current
-            end
-        end
-    end
-    return nothing, MAX, states
-end
-
+#Function takes a successor dict to find the best path.
 function backtrack(vD::Tuple{Int64, Int64}, vA::Tuple{Int64, Int64}, parent::Dict{Tuple{Int64, Int64}, Tuple{Int64, Int64}})
     path = Vector{Tuple{Int64, Int64}}()
     current = vA
+    #going back using the parent dict
     while current != vD
         push!(path, current)
         current = parent[current]
     end
     push!(path, vD)
-    return reverse(path)
+    return reverse(path) #path is from end to start, hence the reverse.
 end
 
-function algoDijkstra(fname, vD, vA)
-    states = 0
-    map, h, w = readmap(fname)
-    L = PriorityQueue{Tuple{Int64, Int64}, Int64}()
-    cost2 = fill(MAX, (h, w))
-    parent = Dict{Tuple{Int64, Int64}, Tuple{Int64, Int64}}()
+#Creates an image from a given Matrix input using Images.
+function mapToImage(map::Matrix{Int64}, h, w, MAX)
+    img = zeros(RGB{N0f8}, h, w) #Création de la carte. Avec des RGB, en normalisé 8bits.
 
-    L[vD] = 0
-    cost2[vD[1], vD[2]] = 0
-    parent[vD] = (-1, -1)
 
-    while !(isempty(L))
-        curr1, curr2 = dequeue!(L)
-        states += 1
-
-        if (curr1, curr2) == vA
-            finalpath = backtrack(vD, vA, parent)
-            return finalpath,  pathCost(map, finalpath), states
-        end
-
-        for (hr, vr) in direct
-            newTile = ((curr1 + hr), (curr2 + vr))
-            inbound= ( 1 <= newTile[1] <= h) && (1 <= newTile[2] <= w)
-            if inbound && map[newTile[1], newTile[2]] != MAX
-                cost = map[newTile[1], newTile[2]] + cost2[curr1, curr2]
-                if cost < (cost2[newTile[1], newTile[2]])
-                    parent[newTile] = (curr1, curr2)
-                    cost2[newTile[1], newTile[2]] = cost
-                    L[newTile] = cost
-                end
-            end
+    for i in 1:h, j in 1:w
+        if map[i, j] == MAX
+            # Mur = Noir
+            img[i, j] = RGB(0, 0, 0)
+        elseif map[i, j] == 8  # Water (W)
+            # Eau = Bleu
+            img[i, j] = RGB(0, 0.5, 1)
+        elseif map[i, j] > 1
+            # Zone lente (S) = Jaune
+            img[i, j] = RGB(1, 1, 0)
+        else
+            # Normal (.) = Blanc
+            img[i, j] = RGB(1, 1, 1)
         end
     end
-    return nothing, MAX, states
+    return img
 end
 
-function algoGlouton(fname, vD, vA)
-    states = 0
-    map, h, w = readmap(fname)
-    L = PriorityQueue{Tuple{Int64, Int64}, Int64}()
-    dist2 = fill(MAX, (h, w))
-    parent = Dict{Tuple{Int64, Int64}, Tuple{Int64, Int64}}()
-
-    L[vD] = 0
-    dist2[vD[1], vD[2]] = 0
-    parent[vD] = (-1, -1)
-    while !(isempty(L))
-        cX, cY = dequeue!(L)
-        states += 1
-
-        if (cX, cY) == vA
-            path = backtrack(vD, vA, parent)
-            return path, pathCost(map, path), states
-        end
-
-        for (hr, vr) in direct
-            newTile = ((cX + hr), (cY + vr))
-            inbound= ( 1<= newTile[1] <= h) && (1 <= newTile[2] <= w) 
-            if inbound && map[newTile[1], newTile[2]] != MAX && !haskey(parent, newTile)
-                cost = abs(newTile[1] - vA[1]) + abs(newTile[2] - vA[2])
-                parent[newTile] = (cX, cY)
-                dist2[newTile[1], newTile[2]] = cost
-                L[newTile] = cost
-            end
-        end
+#colors a path
+function dPath(img, path, color=RGB(1, 0, 0))
+    for (x, y) in path
+        img[x, y] = color #colorisation du chemin
     end
-    return nothing, MAX, states
+    return img
 end
 
-function algoAstar(fname, vD, vA)
-    map, h, w = readmap(fname)
-    L = PriorityQueue{Tuple{Int64, Int64}, Int64}()
-    prio = fill(MAX, (h, w))
-    cost = fill(MAX, (h, w))
-    parent = Dict{Tuple{Int64, Int64}, Tuple{Int64, Int64}}()
-    states = 0
+#Draw a single path on the map (from file name).
+function pathOnMap(file, path, vD, vA, name)
+    map, h, w = readmap(file)
+    img = mapToImage(map, h, w, MAX)
 
-    L[vD] = 0
-    prio[vD[1], vD[2]] = 0
-    cost[vD[1], vD[2]] = 0
-    parent[vD] = (-1, -1)
-
-    while !(isempty(L))
-        cX, cY = dequeue!(L)
-        states += 1
-
-        if (cX, cY) == vA
-            path = backtrack(vD, vA, parent)
-            return path, pathCost(map, path), states 
-        end
-
-        for (hr, vr) in direct
-            newTile = ((cX + hr), (cY + vr))
-            inbound= ( 1<= newTile[1] <= h) && (1 <= newTile[2] <= w)
-            
-            if inbound
-                cost2 = map[newTile[1], newTile[2]] + cost[cX, cY]
-                dist = abs(newTile[1] - vA[1]) + abs(newTile[2] - vA[2])
-                priotot = dist + cost2
-
-                if cost2 < (cost[newTile[1], newTile[2]])
-                    parent[newTile] = (cX, cY)
-                    cost[newTile[1], newTile[2]] = cost2
-                    prio[newTile[1], newTile[2]] = priotot
-                    L[newTile] = priotot
-
-                end
-            end
-        end
+    if !(isnothing(path))
+        dPath(img, path, RGB(1, 0, 0)) #color can be changed
     end
-    return nothing, MAX, states
+    img[vD[1], vD[2]] = RGB(0, 1, 0)#Start
+    img[vA[1], vA[2]] = RGB(0, 0, 1)#End
+
+    filename = "out$name.png"
+    save(filename, img)
+
+end
+
+#same principle as above, but with multiple path.
+function saveMissionsMap(fname, pathes, outputname="output")
+    map, h, w = readmap(fname)
+    img = mapToImage(map, h, w, MAX)
+
+    # 5 colors, max 5 AMR
+    colors = [
+        RGB(1, 0, 0),      # Rouge
+        RGB(0, 0, 1),      # Bleu
+        RGB(0, 1, 0),      # Vert
+        RGB(1, 0.5, 0)    # Orange
+    ]
+
+    for (id, apath, vD, vA) in pathes
+        #color choice (limited to 4 but can be increased)
+        if !isnothing(apath)
+            color = colors[id]
+            dPath(img, apath, color) #marking the path on the image
+        end
+        #making start and end
+        img[vD[1], vD[2]] = RGB(0, 1, 0)
+        img[vA[1], vA[2]] = RGB(0, 0, 1)
+    end
+
+    outname = "$outputname.png"
+    save(outname, img)
+
 end
 
 
+
+#=
+#REMOVE COMMENTAIRY TO SHOW BENCHMARK AND RUNNING RESULTS
 t1 = @benchmark algoBFS("theglaive.map", (189, 193), (226, 437))
 t2 = @benchmark algoDijkstra("theglaive.map", (189, 193), (226, 437))
 t3 = @benchmark algoGlouton("theglaive.map", (189, 193), (226, 437))
@@ -244,3 +184,4 @@ printResults("Gouton", path, cost, states)
 
 @time path, cost, states = algoAstar("theglaive.map", (189, 193), (226, 437))
 printResults("Astar", path, cost, states)
+=#
