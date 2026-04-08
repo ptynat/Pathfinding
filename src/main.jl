@@ -169,7 +169,7 @@ printResults("Gouton", path, cost, states)
 
 path, cost, states = algoAstar("AcrosstheCape.map", (151, 2), (1, 2))
 printResults("Astar", path, cost, states)
-
+=#
 #-------------------------Map 3---------------------------------------
 println("Instance 3, theglaive")
 
@@ -184,4 +184,4 @@ printResults("Gouton", path, cost, states)
 
 @time path, cost, states = algoAstar("theglaive.map", (189, 193), (226, 437))
 printResults("Astar", path, cost, states)
-=#
+#==#

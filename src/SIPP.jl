@@ -2,7 +2,7 @@ const FNAME = "version1.map"
 const MAP, MAP_H, MAP_W = readmap(FNAME)
 const M = fill(MAX, (MAP_H, MAP_W))
 
-#Structure for AMRs to keep track of their states: Where and Availability
+#Structure to keep track of AMRs: Where and Availability
 mutable struct AMRs
     nb::Int64
     position::Tuple{Int64, Int64}
@@ -133,8 +133,8 @@ amrs = [
     AMRs(4, (1, 19), 0)
 ]
 
-timeline = Dict{Int64, Set{Tuple{Int64, Int64}}}()
-missions_log = []
+timeline1 = Dict{Int64, Set{Tuple{Int64, Int64}}}()
+timeline2 = Dict{Int64, Set{Tuple{Int64, Int64}}}()
 
 amr = nothing
 bpath = nothing
@@ -143,6 +143,7 @@ cost = 0
 # This serves as a test to run the missions
 function runMissions(missions, amrs, timeline)
     #Going through the missions one after another, and adding path to the constraints
+    missionsLog = []
     for (pickup, delivery, stime) in missions
         amr, bpath, cost = planMission(amrs, pickup, delivery, timeline, stime, false)
         
@@ -151,15 +152,47 @@ function runMissions(missions, amrs, timeline)
             startT = max(amr.time, stime)
             delivery_time = cost
             
-            push!(missions_log, (amr.nb, bpath, pickup, delivery))
+            push!(missionsLog, (amr.nb, bpath, pickup, delivery))
             amr.position = delivery
             amr.time = delivery_time
             updateTimeline(MAP, bpath, timeline, startT)  # ← Utilise startT!
         end
     end
-    return missions_log
+    return missionsLog
 end
 
-missionsLog = runMissions(missions, amrs, timeline)
+missions1 = [
+    ((1, 4), (11, 9), 0),     
+    ((1, 14), (11, 4), 3),    
+
+]
+amrs1 = [
+    AMRs(1, (1, 4), 0),
+    AMRs(2, (1, 9), 0),
+
+]
+
+missions2 = [
+    ((1, 4), (11, 9), 0),     
+    ((1, 14), (11, 4), 3),    
+    ((1, 4), (11, 4), 5),
+    ((1, 14), (11, 9), 7)
+]
+amrs2 = [
+    AMRs(1, (1, 4), 0),
+    AMRs(2, (1, 9), 0),
+    AMRs(3, (1, 14), 0),
+    AMRs(4, (1, 19), 0)
+]
+
+
+missionsLog2 = runMissions(missions2, amrs2, timeline2)
+missionsLog1 = runMissions(missions1, amrs1, timeline1)
 # Visualization of the result saved to "test_missions.png"
-saveMissionsMap("version1.map", missions_log, "test_missions")
+
+#Example 1:
+saveMissionsMap("version1.map", missionsLog1, "test_mission1")
+
+println("----------------")
+#Example 2
+saveMissionsMap("version1.map", missionsLog2, "test_missions2")
