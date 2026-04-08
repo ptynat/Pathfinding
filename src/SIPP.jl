@@ -12,8 +12,7 @@ end
 function algoAstarMod(vD, vA, D, st)
     map, h, w = MAP, MAP_H, MAP_W
     L = PriorityQueue{Tuple{Int64, Int64}, Int64}()
-    cost = M
-    fill!(cost, MAX)
+    cost = fill(MAX, (MAP_H, MAP_W))
     parent = Dict{Tuple{Int64, Int64}, Tuple{Int64, Int64}}()
 
 
@@ -33,7 +32,7 @@ function algoAstarMod(vD, vA, D, st)
             newTile = ((cX + hr), (cY + vr))
             inbound= ( 1<= newTile[1] <= h) && (1 <= newTile[2] <= w)
             if inbound
-                tcost = map[newTile[1], newTile[2]] 
+                tcost = map[newTile[1], newTile[2]] #time cost
                 cost2 = cost[cX, cY] + tcost
 
                 #verifying all the timesteps 
@@ -61,7 +60,7 @@ function algoAstarMod(vD, vA, D, st)
     return nothing, MAX, D
 end
 
-
+#Plan a Mission from best AMR to cost and path return checking for colisions .
 function planMission(amrs::Vector{AMRs}, vD::Tuple{Int64, Int64}, vA::Tuple{Int64, Int64}, timeLine::Dict, stime::Int64, output=True)
     choice = nothing
     cost = MAX
@@ -71,17 +70,17 @@ function planMission(amrs::Vector{AMRs}, vD::Tuple{Int64, Int64}, vA::Tuple{Int6
     end
 
     for amr in amrs
-        #mission start is at least 
+        #mission start is thelatest time of the two.
         startT = max(amr.time, stime)
-
+        #pathing to pickup
         tPath, tCost, _ = algoAstarMod(amr.position, vD, timeLine, startT)
         
         if isnothing(tPath)
             continue
         end
 
-        endtime = startT + tCost
-        delPath, delCost, _ = algoAstarMod(vD, vA, timeLine, endtime)
+        endtime = startT + tCost #updated starting time for Astar
+        delPath, delCost, _ = algoAstarMod(vD, vA, timeLine, endtime)#pickup to delivery
 
         if isnothing(delPath)
             println("No valid path for delivery for mission for AMR: $(amr.nb)")
@@ -89,7 +88,7 @@ function planMission(amrs::Vector{AMRs}, vD::Tuple{Int64, Int64}, vA::Tuple{Int6
         end
         totalCost = endtime + delCost
 
-        if totalCost < cost
+        if totalCost < cost #pitching each AMR choice against each other.
             choice = amr
             path = vcat(tPath[1:end-1], delPath)
             cost = totalCost
@@ -104,6 +103,7 @@ end
 #Adds all the occupied spaces over a mission in the timeline.
 function updateTimeline(map::Matrix, V::Vector{Tuple{Int64, Int64}}, D::Dict{Int64, Set{Tuple{Int64, Int64}}}, startingTime::Int64)
     tm = startingTime
+    #adding the occupied cases at the right time for the right duration
     for place in V
         cost = map[place[1], place[2]]
         for occ in tm:(tm+cost-1)
@@ -149,13 +149,13 @@ function runMissions(missions, amrs, timeline)
         
 
         if !isnothing(amr)
-            startT = max(amr.time, stime)
-            delivery_time = cost
+            startT = max(amr.time, stime) #starting time
+            delivery_time = cost #end time
             
-            push!(missionsLog, (amr.nb, bpath, pickup, delivery))
+            push!(missionsLog, (amr.nb, bpath, pickup, delivery))#logs of all missions
             amr.position = delivery
             amr.time = delivery_time
-            updateTimeline(MAP, bpath, timeline, startT)  # ← Utilise startT!
+            updateTimeline(MAP, bpath, timeline, startT)#adding the constraint
         end
     end
     return missionsLog
@@ -163,12 +163,12 @@ end
 
 missions1 = [
     ((1, 4), (11, 9), 0),     
-    ((1, 14), (11, 4), 3),    
+    ((1, 14), (11, 4), 3)  
 
 ]
 amrs1 = [
     AMRs(1, (1, 4), 0),
-    AMRs(2, (1, 9), 0),
+    AMRs(2, (1, 9), 0)
 
 ]
 
