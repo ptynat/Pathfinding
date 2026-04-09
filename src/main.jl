@@ -180,7 +180,7 @@ printResults("Dijkstra", path, cost, states)
 
 @time path, cost, states = algoGlouton("theglaive.map", (189, 193), (226, 437))
 printResults("Gouton", path, cost, states)
-
+=#
 @time path, cost, states = algoAstar("theglaive.map", (189, 193), (226, 437))
 printResults("Astar", path, cost, states)
-=#
+#==#

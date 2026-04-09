@@ -97,6 +97,9 @@ function planMission(amrs::Vector{AMRs}, vD::Tuple{Int64, Int64}, vA::Tuple{Int6
     end
 
     println("-- Result: $(isnothing(choice) ? "No path" : "Sucsess AMR number: $(choice.nb)") --\n")
+    if (output)
+        println("path: $path \n cost: $cost")
+    end
     return choice, path, cost
 end
 
@@ -118,34 +121,18 @@ function updateTimeline(map::Matrix, V::Vector{Tuple{Int64, Int64}}, D::Dict{Int
     return D
 end
 
+
 #---- Execution and example of use.
-
-missions = [
-    ((1, 4), (11, 9), 0),     
-    ((1, 14), (11, 2), 3),    
-    ((1, 4), (11, 4), 5),
-    ((1, 14), (11, 9), 7)
-]
-amrs = [
-    AMRs(1, (1, 4), 0),
-    AMRs(2, (1, 9), 0),
-    AMRs(3, (1, 14), 0),
-    AMRs(4, (1, 19), 0)
-]
-
 timeline1 = Dict{Int64, Set{Tuple{Int64, Int64}}}()
 timeline2 = Dict{Int64, Set{Tuple{Int64, Int64}}}()
 
-amr = nothing
-bpath = nothing
-cost = 0
 
 # This serves as a test to run the missions
-function runMissions(missions, amrs, timeline)
+function runMissions(missions, amrs, timeline, on=false)
     #Going through the missions one after another, and adding path to the constraints
     missionsLog = []
     for (pickup, delivery, stime) in missions
-        amr, bpath, cost = planMission(amrs, pickup, delivery, timeline, stime, false)
+        amr, bpath, cost = planMission(amrs, pickup, delivery, timeline, stime, on)
         
 
         if !isnothing(amr)
@@ -163,12 +150,12 @@ end
 
 missions1 = [
     ((1, 4), (11, 9), 0),     
-    ((1, 14), (11, 4), 3)  
+    ((1, 14), (11, 4), 10)  
 
 ]
 amrs1 = [
     AMRs(1, (1, 4), 0),
-    AMRs(2, (1, 9), 0)
+
 
 ]
 
@@ -186,8 +173,8 @@ amrs2 = [
 ]
 
 
-missionsLog2 = runMissions(missions2, amrs2, timeline2)
-missionsLog1 = runMissions(missions1, amrs1, timeline1)
+missionsLog2 = runMissions(missions2, amrs2, timeline2, true)
+missionsLog1 = runMissions(missions1, amrs1, timeline1, true)
 # Visualization of the result saved to "test_missions.png"
 
 #Example 1:
